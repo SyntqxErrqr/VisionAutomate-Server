@@ -80,13 +80,13 @@ module.exports = (config, local, backendAPI) => {
       IO.out("Enter uses.");
       IO.in((data) => {
          let uses = Number.parseInt(data);
-         if (isNaN(uses) || uses < 0) {
+         if (isNaN(uses) || uses < 1) {
             IO.out("Value must be a number greater than 0.", { failure: true });
             getUses();
             return;
          }
-         apiObj.maxUses = uses;
 
+         apiObj.maxUses = uses;
          getPassphrase();
       });
    }
