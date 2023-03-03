@@ -1,5 +1,5 @@
 module.exports = (config, local, backendAPI) => {
-   const VisionAutomateIO = require('./vision-automate-io');
+   const VisionAutomateIO = require('../../vision-automate-io');
 
    /* Creates an object that can be used for running the script locally and/or through the client.
 
