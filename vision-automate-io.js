@@ -29,7 +29,7 @@ class VisionAutomateIO {
    }
 
 
-   in(callback, errCallback = () => { }) {
+   in(callback, errCallback = () => { this.close() }) {
       if (this.local) {
          // If running locally: 
          // Creates a readline interface, reads the line, and closes. 
