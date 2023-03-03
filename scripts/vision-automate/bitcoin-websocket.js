@@ -50,4 +50,4 @@ module.exports = (config, local, backendAPI) => {
    IO.run();
 }
 
-module.exports({}, true); // Uncomment to run locally.
+// module.exports({}, true); // Uncomment to run locally.
