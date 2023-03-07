@@ -1,22 +1,24 @@
 const readline = require("readline");
+const fs = require("fs");
+const os = require("os");
+const jschardet = require('jschardet');
 
 class VisionAutomateIO {
    // Set this to true if this is being ran manually. If run through VisionAutomate, set to false.
-   start;
    local = false;
    backendAPI;
+   fileLocation;
+   folderExists = false;
 
-   constructor(start, obj = {}) {
-      this.start = start;
+   constructor(obj = {}) {
       this.local = obj.local;
       if (!this.local) {
          this.backendAPI = obj.api;
+         this.fileLocation = `${this.backendAPI.wDir}/files/${this.backendAPI.id}/`;
       }
-   }
-
-   run() {
-      // Runs the first function provided by the script.
-      this.start();
+      else {
+         this.fileLocation = './';
+      }
    }
 
    out(str, props = {}) {
@@ -61,17 +63,75 @@ class VisionAutomateIO {
       // Sends a file
    }
 
-   inFile(fileLocation) {
+   inFile(callback, setFileInfo = { writeFile: false, location: "" }, fileLocation = "") {
       // Receives a file
       if (this.local) {
-         this.out("File location: ");
-         this.in((searchLocation) => {
+         if (!fileLocation) {
+            this.out("File location: ");
+            this.in((searchLocation) => {
+               fileLocation = searchLocation;
+            });
+         }
 
-         });
+         let loc = fileLocation;
+         loc = loc.replace(/^~($|\/|\\)/, `${os.homedir()}/`);
+         if (!fs.existsSync(loc)) throw "File does not exist.";
+
+         let buffer = fs.readFileSync(loc);
+
+         if (setFileInfo.writeFile) {
+            if (setFileInfo.location == undefined) {
+               let file = fileLocation.split('/');
+               file = file[file.length - 1];
+               setFileInfo.location = file;
+            }
+
+            this.writeFile(buffer, setFileInfo.location);
+         }
+
+         try {
+            let encoding = jschardet.detect(buffer).encoding;
+
+            callback(buffer.toString(encoding));
+         }
+         catch {
+            callback(buffer);
+         }
       }
       else {
 
       }
+   }
+
+   writeFile(data, location = "") {
+      if (!this.folderExists) {
+         if (!fs.existsSync(this.fileLocation)) {
+            console.log("Doesn't exist")
+            fs.mkdirSync(this.fileLocation);
+         }
+         this.folderExists = true;
+      }
+
+      let locArr = location.split('/');
+      let path = this.fileLocation;
+
+      for (let i = 0; i < locArr.length - 1; i++) {
+         path += `${locArr[i]}/`;
+         if (!fs.existsSync(path)) {
+            fs.mkdirSync(path);
+         }
+      }
+
+      try {
+         fs.writeFileSync(path + locArr[locArr.length - 1], data);
+         // Potenially add a return to this.
+      } catch {
+         throw "File already exists."
+      }
+   }
+
+   getFile(location) {
+
    }
 
    close() {

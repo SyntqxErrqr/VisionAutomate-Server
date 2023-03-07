@@ -1,5 +1,6 @@
 const WebSocket = require('ws');
 const EventEmitter = require('events');
+const fse = require('fs-extra');
 
 let connections = {};
 
@@ -7,12 +8,14 @@ class backendIO {
    ws;
    emitter;
    id;
+   wDir;
 
    constructor(ws, id) {
       this.ws = ws;
       this.emitter = new EventEmitter();
       this.emitter.setMaxListeners(0);
       this.id = id;
+      this.wDir = __dirname;
 
       this.ws.on('close', () => {
          this.close();
@@ -45,8 +48,9 @@ class backendIO {
    close() {
       if (connections[this.id] != undefined) {
          console.log(`Disconnected user: "${this.id}".`);
-         delete connections[this.id];
+         fse.removeSync(`./files/${this.id}`);
          this.emitter.removeAllListeners();
+         delete connections[this.id];
          this.ws.close();
       }
    }

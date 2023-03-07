@@ -2,6 +2,7 @@ module.exports = (config, local, backendAPI) => {
    const mongoose = require("mongoose");
 
    const VisionAutomateIO = require('../vision-automate-io');
+   const IO = new VisionAutomateIO({ local: local, api: backendAPI });
 
    let ApiKey;
    try {
@@ -31,46 +32,36 @@ module.exports = (config, local, backendAPI) => {
       }));
    }
 
-   const IO = new VisionAutomateIO(startScript, { local: local, api: backendAPI });
 
-   function startScript() {
-      IO.out("Connecting to database.");
+   IO.out("Connecting to database.");
 
-      mongoose.set('strictQuery', false);
-      mongoose.connect('mongodb://127.0.0.1/visionautomate');
-      const connection = mongoose.connection;
+   mongoose.set('strictQuery', false);
+   mongoose.connect('mongodb://192.168.86.56/visionautomate');
+   const connection = mongoose.connection;
 
-      connection.once("open", () => {
-         IO.out("Connected.");
+   connection.once("open", () => {
+      IO.out("Connected.");
 
-         console.log(config.apiKey)
-         ApiKey.findById(config.apiKey)
-            .then((apiKey) => {
-               IO.out("Found users.");
-               let users = "Users:\n";
-               for (let i = 0; i < apiKey.devices.length; i++) {
-                  users += `\n${i + 1}: ${apiKey.devices[i].identifier}`;
-               }
-               IO.out(users);
+      console.log(config.apiKey)
+      ApiKey.findById(config.apiKey)
+         .then((apiKey) => {
+            IO.out("Found users.");
+            let users = "Users:\n";
+            for (let i = 0; i < apiKey.devices.length; i++) {
+               users += `\n${i + 1}: ${apiKey.devices[i].identifier}`;
+            }
+            IO.out(users);
 
-               connection.close();
-               completeScript();
-            })
-            .catch((err) => {
-               console.log(err);
-               IO.out("Failed to find.", { failure: true });
-               connection.close();
-               completeScript();
-            })
-      })
-
-   }
-
-   function completeScript() {
-      IO.close();
-   }
-
-   IO.run();
+            connection.close();
+            IO.close();
+         })
+         .catch((err) => {
+            console.log(err);
+            IO.out("Failed to find.", { failure: true });
+            connection.close();
+            IO.close();
+         })
+   })
 }
 
 // module.exports({}, true);

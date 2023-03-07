@@ -3,6 +3,7 @@ module.exports = (config, local, backendAPI) => {
    const mongoose = require("mongoose");
 
    const VisionAutomateIO = require('../../vision-automate-io');
+   const IO = new VisionAutomateIO({ local: local, api: backendAPI });
 
    let ApiKey;
    try {
@@ -32,7 +33,6 @@ module.exports = (config, local, backendAPI) => {
       }));
    }
 
-   const IO = new VisionAutomateIO(startScript, { local: local, api: backendAPI });
 
    let apiObj = {
       devices: [],
@@ -55,26 +55,20 @@ module.exports = (config, local, backendAPI) => {
       maxUses: 10
    }
 
-   function startScript() {
-      IO.out("Creating a new user.");
+   IO.out("Creating a new user.");
 
-      getCompanyname();
-   }
+   IO.out("Enter company name.");
+   IO.in((data) => {
+      data = data.toLowerCase().replace(" ", "-");
+      apiObj.companyName = data;
 
-   function getCompanyname() {
-      IO.out("Enter company name.");
-      IO.in((data) => {
-         data = data.toLowerCase().replace(" ", "-");
-         apiObj.companyName = data;
-
-         if (config.askUses) {
-            getUses();
-         }
-         else {
-            getPassphrase();
-         }
-      });
-   }
+      if (config.askUses) {
+         getUses();
+      }
+      else {
+         getPassphrase();
+      }
+   });
 
    function getUses() {
       IO.out("Enter uses.");
@@ -114,24 +108,16 @@ module.exports = (config, local, backendAPI) => {
                IO.out(`Successfully created user.`, { success: true });
                IO.out(`Key: ${apiKey._id}`);
                connection.close();
-               completeScript();
+               IO.close();
             })
             .catch((err) => {
                console.log(err);
                IO.out("Failed to create user.", { failure: true });
                connection.close();
-               completeScript();
+               IO.close();
             })
       })
    }
-
-   function completeScript() {
-      // console.log(apiObj);
-
-      IO.close();
-   }
-
-   IO.run();
 }
 
 // module.exports({}, true);
