@@ -28,6 +28,10 @@ class backendIO {
             this.emitter.emit("userInput", data.text);
             break;
          }
+         case "userUpload": {
+            this.emitter.emit("userUpload", data.data, data.info);
+            break;
+         }
       }
    }
 
@@ -41,6 +45,16 @@ class backendIO {
          this.emitter.on('userInput', (input) => {
             this.emitter.removeListener("userInput", () => { });
             resolve(input);
+         });
+      });
+   }
+
+   async receiveFile() {
+      // Send input request and return data in the promise.
+      return new Promise((resolve, reject) => {
+         this.emitter.on('userUpload', (data, info) => {
+            this.emitter.removeListener("userUpload", () => { });
+            resolve({ data: data, info: info });
          });
       });
    }
@@ -60,8 +74,7 @@ const wss = new WebSocket.Server({ port: 8080 });
 
 // On connection
 wss.on('connection', (ws) => {
-   console.log('')
-   console.log("Established connection.");
+   console.log("\nEstablished connection.");
 
    // On message
    ws.on('message', (message) => {
@@ -72,7 +85,12 @@ wss.on('connection', (ws) => {
          console.log(`Starting ${data.script.location} : (${data.id})`)
          connections[data.id] = new backendIO(ws, data.id);
          try {
-            require(`./scripts/${data.script.location}`)(data.script.config, false, connections[data.id]);
+            if (!data.script.location) {
+               require(`./scripts/config-print`)(data.script.config, false, connections[data.id]);
+            }
+            else {
+               require(`./scripts/${data.script.location}`)(data.script.config, false, connections[data.id]);
+            }
          }
          catch (err) {
             console.log(err);

@@ -99,14 +99,23 @@ class VisionAutomateIO {
          }
       }
       else {
-
+         this.out("Select file.", { userUpload: true });
+         this.backendAPI.receiveFile()
+            .then((obj) => {
+               this.writeFile(Buffer.from(obj.data, "base64"), obj.info.name);
+               callback(obj.info);
+            })
+            .catch((err) => {
+               console.log(err);
+               this.out(err, { error: true });
+               callback(err);
+            })
       }
    }
 
    writeFile(data, location = "") {
       if (!this.folderExists) {
          if (!fs.existsSync(this.fileLocation)) {
-            console.log("Doesn't exist")
             fs.mkdirSync(this.fileLocation);
          }
          this.folderExists = true;
