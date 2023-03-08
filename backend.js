@@ -94,7 +94,7 @@ wss.on('connection', (ws) => {
          }
          catch (err) {
             console.log(err);
-            connections[data.id].send({ text: "Script failed.", props: { failure: true, action: "close" } });
+            connections[data.id].send({ text: "Script failed.", props: { failure: true, highlight: true, action: "close" } });
             connections[data.id].close();
          }
       }

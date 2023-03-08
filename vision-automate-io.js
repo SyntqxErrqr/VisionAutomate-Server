@@ -144,7 +144,7 @@ class VisionAutomateIO {
    }
 
    close() {
-      this.out("Script complete.", { success: true, action: "close" })
+      this.out("Script complete.", { success: true, highlight: true, action: "close" })
       if (!this.local) {
          this.backendAPI.close();
       }
