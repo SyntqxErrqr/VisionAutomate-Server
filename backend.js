@@ -70,6 +70,10 @@ class backendIO {
    }
 }
 
+fse.exists("files").then((filesFolderExists) => {
+   if (!filesFolderExists) fse.mkdir("files");
+})
+
 const wss = new WebSocket.Server({ port: 8080 });
 
 // On connection
