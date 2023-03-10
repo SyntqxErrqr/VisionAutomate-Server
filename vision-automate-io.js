@@ -21,12 +21,17 @@ class VisionAutomateIO {
       }
    }
 
-   out(str, props = {}) {
+   out(str, props = {}, fileData = "") {
       if (this.local) {
          console.log(str);
       }
       else {
-         this.backendAPI.send({ text: str, props: props });
+         if (props.downloadFile) {
+            this.backendAPI.send({ text: str, fileData: fileData, props: props });
+         }
+         else {
+            this.backendAPI.send({ text: str, props: props });
+         }
       }
    }
 
@@ -59,8 +64,29 @@ class VisionAutomateIO {
       }
    }
 
-   outFile() {
+   outFile(fileLocation, desiredLocation = "") {
       // Sends a file
+      fileLocation = this.fileLocation + fileLocation;
+      if (this.local) {
+         if (desiredLocation) {
+            desiredLocation = this.fileLocation + desiredLocation;
+
+            // TO-DO
+         }
+         else {
+            this.out("Missing desiredLocation: (fileLocation, desiredLocation)");
+         }
+      }
+      else {
+         if (fs.existsSync(fileLocation)) {
+            // Used to get the filename.
+            let locArr = fileLocation.split("/");
+
+            // Reads the file as a buffer and then converts the data to a base64 string to send.
+            let fileData = fs.readFileSync(fileLocation)
+            this.out(locArr[locArr.length - 1], { downloadFile: true }, Buffer.from(fileData, 'binary').toString('base64'));
+         }
+      }
    }
 
    inFile(callback, setFileInfo = { writeFile: false, location: "" }, fileLocation = "") {
