@@ -18,8 +18,8 @@ module.exports = (config, local, backendAPI) => {
    }, { writeFile: true, location: "test.txt" }, "~/Downloads/text.txt");
 
    function sendLastData() {
-      IO.outFile(file1.name);
-      IO.outFile(file2.name);
+      IO.outFile(file1.name, "~/Desktop/");
+      IO.outFile(file2.name, "~/Desktop/");
       IO.close();
    }
 
