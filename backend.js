@@ -3,6 +3,7 @@ const EventEmitter = require('events');
 const fse = require('fs-extra');
 
 let connections = {};
+let port = 49823;
 
 class backendIO {
    ws;
@@ -74,7 +75,7 @@ fse.exists("files").then((filesFolderExists) => {
    if (!filesFolderExists) fse.mkdir("files");
 })
 
-const wss = new WebSocket.Server({ port: 8080 });
+const wss = new WebSocket.Server({ port: port });
 
 // On connection
 wss.on('connection', (ws) => {
