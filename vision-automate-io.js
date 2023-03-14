@@ -1,7 +1,7 @@
 const readline = require("readline");
 const fs = require("fs");
 const os = require("os");
-const jschardet = require('jschardet');
+const mime = require('mime');
 
 class VisionAutomateIO {
    // Set this to true if this is being ran manually. If run through VisionAutomate, set to false.
@@ -21,13 +21,16 @@ class VisionAutomateIO {
       }
    }
 
-   out(str, props = {}, fileData = "") {
+   out(str, props = {}, data = {}) {
       if (this.local) {
          console.log(str);
       }
       else {
          if (props.downloadFile) {
-            this.backendAPI.send({ text: str, fileData: fileData, props: props });
+            this.backendAPI.send({ text: str, fileData: data.fileData, props: props });
+         }
+         else if (props.uploadConfig) {
+            this.backendAPI.send({ text: str, configData: data.configData, props: props });
          }
          else {
             this.backendAPI.send({ text: str, props: props });
@@ -65,13 +68,16 @@ class VisionAutomateIO {
    }
 
    outFile(fileLocation, desiredLocation = "") {
+      console.log(fileLocation);
       // Sends a file
       fileLocation = this.fileLocation + fileLocation;
+      // Used to get the filename.
+      let locArr = fileLocation.split("/");
       if (this.local) {
          if (desiredLocation) {
-            desiredLocation = this.fileLocation + desiredLocation;
-
-            // TO-DO
+            console.log(locArr)
+            console.log(desiredLocation + locArr[locArr.length - 1]);
+            this.writeFile(fs.readFileSync(fileLocation), desiredLocation + locArr[locArr.length - 1]);
          }
          else {
             this.out("Missing desiredLocation: (fileLocation, desiredLocation)");
@@ -79,12 +85,10 @@ class VisionAutomateIO {
       }
       else {
          if (fs.existsSync(fileLocation)) {
-            // Used to get the filename.
-            let locArr = fileLocation.split("/");
 
             // Reads the file as a buffer and then converts the data to a base64 string to send.
             let fileData = fs.readFileSync(fileLocation)
-            this.out(locArr[locArr.length - 1], { downloadFile: true }, Buffer.from(fileData, 'binary').toString('base64'));
+            this.out(locArr[locArr.length - 1], { downloadFile: true }, { fileData: Buffer.from(fileData, 'binary').toString('base64') });
          }
       }
    }
@@ -104,6 +108,7 @@ class VisionAutomateIO {
          if (!fs.existsSync(loc)) throw "File does not exist.";
 
          let buffer = fs.readFileSync(loc);
+         let type = mime.getType(loc);
 
          if (setFileInfo.writeFile) {
             if (setFileInfo.location == undefined) {
@@ -115,13 +120,12 @@ class VisionAutomateIO {
             this.writeFile(buffer, setFileInfo.location);
          }
 
-         try {
-            let encoding = jschardet.detect(buffer).encoding;
-
-            callback(buffer.toString(encoding));
+         if (setFileInfo.location) {
+            callback({ name: setFileInfo.location, type: type });
          }
-         catch {
-            callback(buffer);
+         else {
+            let locArr = loc.split('/');
+            callback({ name: locArr[locArr.length - 1], type: type });
          }
       }
       else {
@@ -140,6 +144,11 @@ class VisionAutomateIO {
    }
 
    writeFile(data, location = "") {
+      let oldLoc = location;
+      location = location.replace(/^~($|\/|\\)/, `${os.homedir()}/`);
+
+      let homeToggle = oldLoc == location;
+
       if (!this.folderExists) {
          if (!fs.existsSync(this.fileLocation)) {
             fs.mkdirSync(this.fileLocation);
@@ -148,7 +157,9 @@ class VisionAutomateIO {
       }
 
       let locArr = location.split('/');
-      let path = this.fileLocation;
+
+      let path = "";
+      if (homeToggle) path = this.fileLocation;
 
       for (let i = 0; i < locArr.length - 1; i++) {
          path += `${locArr[i]}/`;
@@ -165,9 +176,15 @@ class VisionAutomateIO {
       }
    }
 
-   getFile(location) {
-
+   updateConfig(data) {
+      if (this.local) {
+         this.out("Running locally does not support updating config from this library.");
+      }
+      else {
+         this.out("Updating config.", { uploadConfig: true, highlight: true }, { configData: data });
+      }
    }
+
 
    close() {
       this.out("Script complete.", { success: true, highlight: true, action: "close" })
